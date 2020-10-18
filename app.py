@@ -184,14 +184,20 @@ def runModel():
     if request.method == 'POST':
         make_subdirectories(pprocessed_base)
         results = infer.run_pipeline()
+        final_scores = {}
         for result_set in results:
             for idx in result_set:
                 file = os.path.split(result_set[idx]['File'])[1]
                 score = result_set[idx]['Cancer Score']
-                res = Results.query.filter_by(filename=file).first()
-                print(file, score, res)
-                res.result = str(score)
-                db.session.commit()
+                try:
+                    final_scores[file] += score/len(results)
+                except:
+                    final_scores[file] = score/len(results)
+        for file in final_scores:
+            res = Results.query.filter_by(filename=file).first()
+            print(file, final_scores[file], res)
+            res.result = str(score)
+            db.session.commit()
         return "Success"
     return 'Error'
 
